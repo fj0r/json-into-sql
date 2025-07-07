@@ -5,6 +5,8 @@ use figment::{
 };
 use serde::Deserialize;
 
+pub type AllowList = Option<Vec<String>>;
+
 #[derive(Debug, Deserialize, Clone)]
 #[allow(unused)]
 pub struct Database {
@@ -16,6 +18,7 @@ pub struct Database {
     pub schema: Option<String>,
     pub user: String,
     pub passwd: String,
+    pub allow_list: AllowList,
 }
 
 impl Database {

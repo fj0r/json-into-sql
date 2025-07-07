@@ -1,3 +1,4 @@
+use super::config::AllowList;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -23,6 +24,7 @@ pub struct Schema {
 #[derive(Debug)]
 pub struct Store<T: Define> {
     pub schema: HashMap<String, Schema>,
+    pub allow_list: AllowList,
     pub client: T,
 }
 
@@ -34,9 +36,10 @@ pub struct Entity {
 }
 
 impl<T: Define> Store<T> {
-    pub fn new(client: T) -> Self {
+    pub fn new(client: T, allow_list: AllowList) -> Self {
         Self {
             schema: HashMap::new(),
+            allow_list,
             client,
         }
     }
@@ -45,6 +48,7 @@ impl<T: Define> Store<T> {
             .entry(entity.schema)
             .and_modify(|s| {
                 s.table
+                    // TODO: rm clone
                     .entry(entity.table.clone())
                     .and_modify(|t| {
                         *t = entity.content.clone();

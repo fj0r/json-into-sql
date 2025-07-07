@@ -33,7 +33,7 @@ async fn main() -> Result<()> {
     };
 
     let client = conn(&cfg.database).await?;
-    let shared = Shared::new(Store::new(client));
+    let shared = Shared::new(Store::new(client, cfg.database.allow_list));
 
     let app = Router::new()
         .nest("/v1", data_router())
