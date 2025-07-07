@@ -1,5 +1,6 @@
 use anyhow::Result;
 use std::collections::HashMap;
+use std::fmt::Debug;
 
 #[derive(Debug)]
 pub struct Column {
@@ -19,12 +20,12 @@ pub struct Schema {
 }
 
 #[derive(Debug)]
-pub struct Store<T: SchemaUpdater> {
+pub struct Store<T: Define> {
     schema: HashMap<String, Schema>,
     pub client: T,
 }
 
-impl<T: SchemaUpdater> Store<T> {
+impl<T: Define> Store<T> {
     pub fn new(client: T) -> Self {
         Self {
             schema: HashMap::new(),
@@ -33,22 +34,15 @@ impl<T: SchemaUpdater> Store<T> {
     }
 }
 
-pub trait SchemaUpdater {
+pub trait Define {
     type Output;
     async fn get_schema<'a>(&self, schema: &'a str, table: &'a str) -> Result<Self::Output>;
 }
 
-impl<T: SchemaUpdater> SchemaUpdater for Store<T> {
+impl<T: Define + Debug> Define for Store<T> {
     type Output = ();
     async fn get_schema<'a>(&self, schema: &'a str, table: &'a str) -> Result<Self::Output> {
         self.client.get_schema(schema, table);
-        Ok(())
-    }
-}
-
-pub trait Define: SchemaUpdater {
-    async fn update(&mut self, schema: &str, table: &str) -> Result<()> {
-        self.get_schema(schema, table);
         Ok(())
     }
 }

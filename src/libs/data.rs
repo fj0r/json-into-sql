@@ -6,8 +6,7 @@ use axum::{
     routing::{get, post},
 };
 
-use super::schema::SchemaUpdater;
-use futures::TryStreamExt;
+use super::schema::Define;
 use serde::Deserialize;
 use serde_json::{Value, json};
 use sqlx::{Row, query};
@@ -20,11 +19,8 @@ async fn schema(
 ) -> HttpResult<Json<Vec<Value>>> {
     let db = db.read().await;
     println!("{}, {}", &schema, &table);
-    let x = db.deref().get_schema(&schema, &table).await?;
+    db.deref().get_schema(&schema, &table).await?;
     let mut v = Vec::new();
-    while let Some(r) = x.try_next().await? {
-        dbg!(&r);
-    }
     Ok(Json(v)).into()
 }
 

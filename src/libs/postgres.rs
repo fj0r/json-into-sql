@@ -1,6 +1,7 @@
 use super::config::Database;
-use super::schema::{Define, SchemaUpdater, Store};
+use super::schema::{Column, Define, Store};
 use anyhow::Result;
+use futures::TryStreamExt;
 use sqlx::{Pool, Postgres, postgres::PgPoolOptions, query};
 
 pub async fn conn(config: &Database) -> Result<Pool<Postgres>> {
@@ -9,10 +10,10 @@ pub async fn conn(config: &Database) -> Result<Pool<Postgres>> {
     Ok(pool)
 }
 
-impl SchemaUpdater for Pool<Postgres> {
+impl Define for Pool<Postgres> {
     type Output = ();
     async fn get_schema<'a>(&self, schema: &'a str, table: &'a str) -> Result<Self::Output> {
-        let x =
+        let mut x =
         query(r#"
             with ct as (
                 select ccu.table_schema, ccu.table_name, ccu.column_name, tc.constraint_type is not null as pk
@@ -33,8 +34,10 @@ impl SchemaUpdater for Pool<Postgres> {
         .bind(schema)
         .bind(table)
         .fetch(self);
-        Ok(x)
+
+        while let Some(r) = x.try_next().await? {
+            dbg!(&r);
+        }
+        Ok(())
     }
 }
-
-impl Define for Store<Pool<Postgres>> {}
