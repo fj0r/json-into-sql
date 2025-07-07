@@ -1,8 +1,9 @@
 use super::config::Database;
-use super::schema::{Column, Define, Store};
+use super::schema::{Column, Define, Store, Table};
 use anyhow::Result;
 use futures::TryStreamExt;
-use sqlx::{Pool, Postgres, postgres::PgPoolOptions, query};
+use sqlx::{Pool, Postgres, Row, postgres::PgPoolOptions, query};
+use std::collections::HashMap;
 
 pub async fn conn(config: &Database) -> Result<Pool<Postgres>> {
     let c: String = config.to_url();
@@ -11,7 +12,7 @@ pub async fn conn(config: &Database) -> Result<Pool<Postgres>> {
 }
 
 impl Define for Pool<Postgres> {
-    type Output = ();
+    type Output = Table;
     async fn get_schema<'a>(&self, schema: &'a str, table: &'a str) -> Result<Self::Output> {
         let mut x =
         query(r#"
@@ -35,9 +36,29 @@ impl Define for Pool<Postgres> {
         .bind(table)
         .fetch(self);
 
+        let mut pks = Vec::new();
+        let mut column = HashMap::new();
         while let Some(r) = x.try_next().await? {
-            dbg!(&r);
+            let name: &str = r.try_get("column_name")?;
+            let data_type: &str = r.try_get("data_type")?;
+            let data_type: String = data_type.to_owned();
+            let nullable: &str = r.try_get("is_nullable")?;
+            let nullable = nullable == "YES";
+            column.insert(
+                name.to_owned(),
+                Column {
+                    nullable,
+                    data_type,
+                },
+            );
+            let pk: bool = r.try_get("pk")?;
+            if pk {
+                pks.push(name.to_owned());
+            }
         }
-        Ok(())
+        Ok(Table {
+            primary_key: pks,
+            column,
+        })
     }
 }

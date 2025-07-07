@@ -4,24 +4,24 @@ use std::fmt::Debug;
 
 #[derive(Debug)]
 pub struct Column {
-    nullable: bool,
-    data_type: String,
+    pub nullable: bool,
+    pub data_type: String,
 }
 
 #[derive(Debug)]
 pub struct Table {
-    primary_key: Vec<String>,
-    column: HashMap<String, Column>,
+    pub primary_key: Vec<String>,
+    pub column: HashMap<String, Column>,
 }
 
 #[derive(Debug)]
 pub struct Schema {
-    table: HashMap<String, Table>,
+    pub table: HashMap<String, Table>,
 }
 
 #[derive(Debug)]
 pub struct Store<T: Define> {
-    schema: HashMap<String, Schema>,
+    pub schema: HashMap<String, Schema>,
     pub client: T,
 }
 
@@ -40,9 +40,8 @@ pub trait Define {
 }
 
 impl<T: Define + Debug> Define for Store<T> {
-    type Output = ();
+    type Output = Table;
     async fn get_schema<'a>(&self, schema: &'a str, table: &'a str) -> Result<Self::Output> {
-        self.client.get_schema(schema, table);
-        Ok(())
+        Ok(self.client.get_schema(schema, table).await?)
     }
 }
