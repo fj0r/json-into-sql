@@ -1,0 +1,10 @@
+[trace]
+format = 'compact'
+
+[database]
+type = 'postgres'
+host = 'localhost'
+port = 15432
+db = 'chat'
+user = 'chat'
+passwd = 'chat'
