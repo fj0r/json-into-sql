@@ -62,3 +62,4 @@ impl Define for Pool<Postgres> {
         })
     }
 }
+

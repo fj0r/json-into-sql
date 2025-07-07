@@ -6,7 +6,7 @@ use axum::{
     routing::{get, post},
 };
 
-use super::schema::Define;
+use super::schema::{Define, Table};
 use serde::Deserialize;
 use serde_json::{Value, json};
 use sqlx::{Row, query};
@@ -16,12 +16,10 @@ use std::ops::Deref;
 async fn schema(
     State(db): State<Pg>,
     Path((schema, table)): Path<(String, String)>,
-) -> HttpResult<Json<Vec<Value>>> {
+) -> HttpResult<Json<Table>> {
     let db = db.read().await;
-    println!("{}, {}", &schema, &table);
-    db.deref().get_schema(&schema, &table).await?;
-    let mut v = Vec::new();
-    Ok(Json(v)).into()
+    let x = db.deref().get_schema(&schema, &table).await?;
+    Ok(Json(x))
 }
 
 #[derive(Deserialize, Debug)]

@@ -1,20 +1,21 @@
 use anyhow::Result;
 use std::collections::HashMap;
 use std::fmt::Debug;
+use serde::{Serialize, Deserialize};
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Column {
     pub nullable: bool,
     pub data_type: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Table {
     pub primary_key: Vec<String>,
     pub column: HashMap<String, Column>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Schema {
     pub table: HashMap<String, Table>,
 }
@@ -39,8 +40,8 @@ pub trait Define {
     async fn get_schema<'a>(&self, schema: &'a str, table: &'a str) -> Result<Self::Output>;
 }
 
-impl<T: Define + Debug> Define for Store<T> {
-    type Output = Table;
+impl<T: Define> Define for Store<T> {
+    type Output = T::Output;
     async fn get_schema<'a>(&self, schema: &'a str, table: &'a str) -> Result<Self::Output> {
         Ok(self.client.get_schema(schema, table).await?)
     }
