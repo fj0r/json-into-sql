@@ -8,17 +8,14 @@ use axum::{
 
 use super::schema::{Define, Table};
 use serde::Deserialize;
-use serde_json::{Value, json};
-use sqlx::{Row, query};
-use std::collections::HashMap;
-use std::ops::Deref;
+use serde_json::Value;
 
 async fn schema(
     State(db): State<Pg>,
     Path((schema, table)): Path<(String, String)>,
 ) -> HttpResult<Json<Table>> {
-    let db = db.read().await;
-    let x = db.deref().get_schema(&schema, &table).await?;
+    let mut db = db.write().await;
+    let x = db.sync(&schema, &table).await?;
     Ok(Json(x))
 }
 
@@ -36,7 +33,8 @@ async fn upsert(
     let db = db.read().await;
     println!("{}, {}", schema, table);
     println!("{}", data);
-    println!("{:?}", q);
+    println!("{:?}", q.var);
+    println!("{:?}", db);
     Ok(Json(data))
 }
 

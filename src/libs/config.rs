@@ -19,6 +19,7 @@ pub struct Database {
 }
 
 impl Database {
+    #[allow(dead_code)]
     pub fn to_st(self: &Database) -> String {
         concat_fields! {
             var self;
@@ -29,6 +30,7 @@ impl Database {
             password = passwd;
         }
     }
+    #[allow(dead_code)]
     pub fn to_url(self: &Database) -> String {
         format!(
             "postgres://{}:{}@{}:{}/{}",

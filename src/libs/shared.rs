@@ -1,4 +1,4 @@
-use super::schema::{Define, Store};
+use super::schema::Store;
 use axum::extract::FromRef;
 use sqlx::{Pool, Postgres};
 use std::sync::Arc;

@@ -1,9 +1,10 @@
 use super::config::Database;
-use super::schema::{Column, Define, Store, Table};
+use super::schema::{Column, Define, Entity, Store, Table};
 use anyhow::Result;
 use futures::TryStreamExt;
 use sqlx::{Pool, Postgres, Row, postgres::PgPoolOptions, query};
 use std::collections::HashMap;
+use tracing::info;
 
 pub async fn conn(config: &Database) -> Result<Pool<Postgres>> {
     let c: String = config.to_url();
@@ -12,8 +13,8 @@ pub async fn conn(config: &Database) -> Result<Pool<Postgres>> {
 }
 
 impl Define for Pool<Postgres> {
-    type Output = Table;
-    async fn get_schema<'a>(&self, schema: &'a str, table: &'a str) -> Result<Self::Output> {
+    type Output = Entity;
+    async fn sync<'a>(&mut self, schema: &'a str, table: &'a str) -> Result<Self::Output> {
         let mut x =
         query(r#"
             with ct as (
@@ -34,7 +35,7 @@ impl Define for Pool<Postgres> {
          "#)
         .bind(schema)
         .bind(table)
-        .fetch(self);
+        .fetch(&*self);
 
         let mut pks = Vec::new();
         let mut column = HashMap::new();
@@ -56,10 +57,29 @@ impl Define for Pool<Postgres> {
                 pks.push(name.to_owned());
             }
         }
-        Ok(Table {
-            primary_key: pks,
-            column,
+        Ok(Entity {
+            schema: schema.to_string(),
+            table: table.to_string(),
+            content: Table {
+                primary_key: pks,
+                column,
+            },
         })
     }
 }
 
+impl Define for Store<Pool<Postgres>> {
+    type Output = Table;
+    async fn sync<'a>(&mut self, schema: &'a str, table: &'a str) -> Result<Self::Output> {
+        if let Some(s) = self.schema.get(schema)
+            && let Some(t) = s.table.get(table)
+        {
+            Ok(t.clone())
+        } else {
+            info!("sync schema from {}.{}", schema, table);
+            let r = self.client.sync(schema, table).await?;
+            self.update(r.clone())?;
+            Ok(r.content)
+        }
+    }
+}
