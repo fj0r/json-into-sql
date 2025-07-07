@@ -18,3 +18,10 @@ export def schema [
 ] {
     http get $"localhost:5050/v1/schema/($schema)/($table)"
 }
+
+export def git-hooks [act ctx] {
+    if $act == 'pre-commit' and $ctx.branch == 'main' {
+        cargo fmt
+        git add .
+    }
+}
