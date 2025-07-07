@@ -1,13 +1,14 @@
+use super::schema::{SchemaUpdater, Store};
 use axum::extract::FromRef;
 use sqlx::{Pool, Postgres};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-pub type Pg = Arc<RwLock<Pool<Postgres>>>;
+pub type Pg = Arc<RwLock<Store<Pool<Postgres>>>>;
 
 #[derive(Debug, Clone)]
 pub struct Shared {
-    pub db: Pg,
+    pub db: Arc<RwLock<Store<Pool<Postgres>>>>,
 }
 
 impl FromRef<Shared> for Pg {
@@ -17,7 +18,7 @@ impl FromRef<Shared> for Pg {
 }
 
 impl Shared {
-    pub fn new(db: Pool<Postgres>) -> Self {
+    pub fn new(db: Store<Pool<Postgres>>) -> Self {
         Self {
             db: Arc::new(RwLock::new(db)),
         }

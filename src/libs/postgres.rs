@@ -10,8 +10,9 @@ pub async fn conn(config: &Database) -> Result<Pool<Postgres>> {
 }
 
 impl SchemaUpdater for Pool<Postgres> {
-    async fn get_schema<'a>(&self, schema: &'a str, table: &'a str) -> Result<()> {
-        let mut x =
+    type Output = ();
+    async fn get_schema<'a>(&self, schema: &'a str, table: &'a str) -> Result<Self::Output> {
+        let x =
         query(r#"
             with ct as (
                 select ccu.table_schema, ccu.table_name, ccu.column_name, tc.constraint_type is not null as pk
@@ -32,8 +33,8 @@ impl SchemaUpdater for Pool<Postgres> {
         .bind(schema)
         .bind(table)
         .fetch(self);
-        Ok(())
+        Ok(x)
     }
 }
 
-impl Define for Store<'_, Pool<Postgres>> {}
+impl Define for Store<Pool<Postgres>> {}

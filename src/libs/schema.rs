@@ -1,31 +1,46 @@
 use anyhow::Result;
 use std::collections::HashMap;
 
+#[derive(Debug)]
 pub struct Column {
     nullable: bool,
     data_type: String,
 }
 
+#[derive(Debug)]
 pub struct Table {
     primary_key: Vec<String>,
     column: HashMap<String, Column>,
 }
 
+#[derive(Debug)]
 pub struct Schema {
     table: HashMap<String, Table>,
 }
 
-pub struct Store<'a, T: SchemaUpdater> {
+#[derive(Debug)]
+pub struct Store<T: SchemaUpdater> {
     schema: HashMap<String, Schema>,
-    client: &'a T
+    pub client: T,
+}
+
+impl<T: SchemaUpdater> Store<T> {
+    pub fn new(client: T) -> Self {
+        Self {
+            schema: HashMap::new(),
+            client,
+        }
+    }
 }
 
 pub trait SchemaUpdater {
-    async fn get_schema<'a>(&self, schema: &'a str, table: &'a str) -> Result<()>;
+    type Output;
+    async fn get_schema<'a>(&self, schema: &'a str, table: &'a str) -> Result<Self::Output>;
 }
 
-impl<T: SchemaUpdater> SchemaUpdater for Store<'_, T> {
-    async fn get_schema<'a>(&self, schema: &'a str, table: &'a str) -> Result<()> {
+impl<T: SchemaUpdater> SchemaUpdater for Store<T> {
+    type Output = ();
+    async fn get_schema<'a>(&self, schema: &'a str, table: &'a str) -> Result<Self::Output> {
         self.client.get_schema(schema, table);
         Ok(())
     }
