@@ -34,12 +34,15 @@ impl Pg {
         let cs = pl.columns.join(", ");
         let fs = pl.fields.join(", ");
         let tn = format!("{}.{}", pl.schema, pl.table);
-        // TODO: arbitrary values
-        let sql = format!("insert into {} ({}) values (unnest({}))", tn, cs, "$1");
+        let sql = format!("insert into {} ({}) values ({})", tn, cs, fs);
         println!("{:?}", sql);
         let mut x = pl.values.clone();
         x.push(pl.variant);
-        let mut r = query(&sql).bind(x).fetch(&**self);
+        let mut r = query(&sql);
+        for i in x {
+            r = r.bind(i);
+        }
+        let mut r = r.fetch(&**self);
         while let Some(i) = r.try_next().await? {
             println!("{:?}", i);
         }
