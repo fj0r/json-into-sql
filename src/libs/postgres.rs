@@ -53,11 +53,15 @@ impl Pg {
         .bind(table)
         .fetch(&**self);
 
-        let mut pks = Vec::new();
+        let mut primary_key = Vec::new();
+        let mut variant = Vec::new();
         let mut column = HashMap::new();
         while let Some(r) = x.try_next().await? {
             let name: &str = r.try_get("column_name")?;
             let data_type: &str = r.try_get("data_type")?;
+            if data_type == "jsonb" {
+                variant.push(name.to_owned());
+            };
             let data_type: String = data_type.to_owned();
             let nullable: &str = r.try_get("is_nullable")?;
             let nullable = nullable == "YES";
@@ -70,14 +74,15 @@ impl Pg {
             );
             let pk: bool = r.try_get("pk")?;
             if pk {
-                pks.push(name.to_owned());
+                primary_key.push(name.to_owned());
             }
         }
         Ok(Entity {
             schema: schema.to_string(),
             table: table.to_string(),
             content: Table {
-                primary_key: pks,
+                primary_key,
+                variant,
                 column,
             },
         })

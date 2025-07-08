@@ -1,13 +1,14 @@
+use crate::libs::error::mkerr;
+
 use super::error::HttpResult;
+use super::schema::{Define, Table};
 use super::shared::{PgShared, Shared};
+use anyhow::anyhow;
 use axum::{
     Json, Router,
     extract::{Path, Query, State},
-    response::IntoResponse,
     routing::{get, post},
 };
-
-use super::schema::{Define, Table};
 use serde::Deserialize;
 use serde_json::Value;
 
@@ -48,8 +49,11 @@ async fn upsert(
     Json(data): Json<Value>,
 ) -> HttpResult<Json<Value>> {
     let db = db.read().await;
-    let x = db.get(&schema, &table)?;
-    println!("{:?}", x);
+    let tbl = db.get(&schema, &table)?;
+    if !tbl.variant.contains(&q.var) {
+        return mkerr(format!("{} is not a variant", &q.var));
+    };
+    println!("{:?}", tbl);
     println!("{}, {}", schema, table);
     println!("{}", data);
     println!("{:?}", q.var);

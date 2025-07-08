@@ -13,6 +13,7 @@ pub struct Column {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Table {
     pub primary_key: Vec<String>,
+    pub variant: Vec<String>,
     pub column: HashMap<String, Column>,
 }
 
