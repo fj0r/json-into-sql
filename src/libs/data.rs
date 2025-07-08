@@ -1,5 +1,5 @@
 use super::error::HttpResult;
-use super::schema::{Define, Payload, Table};
+use super::schema::{Define, Payload, Table, Val};
 use super::shared::{PgShared, Shared};
 use crate::libs::error::mkerr;
 use axum::{
@@ -70,7 +70,9 @@ async fn upsert(
                     ix += 1;
                     fields.push(format!("${}", ix));
                     columns.push(k.to_owned());
-                    values.push(v);
+                    let t = tbl.column.get(k).unwrap();
+                    let val = Val{value: v, typ: &t.data_type};
+                    values.push(val);
                 } else {
                     ext.insert(k.to_string(), v.clone());
                 }

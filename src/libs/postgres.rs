@@ -1,5 +1,5 @@
 use super::config::Database;
-use super::schema::{Column, Define, Entity, Payload, Store, Table};
+use super::schema::{Column, Define, Entity, Payload, Store, Table, Val};
 use anyhow::{Result, anyhow};
 use futures::TryStreamExt;
 use sqlx::{Pool, Postgres, Row, postgres::PgPoolOptions, query};
@@ -35,12 +35,19 @@ impl Pg {
         let fs = pl.fields.join(", ");
         let tn = format!("{}.{}", pl.schema, pl.table);
         let sql = format!("insert into {} ({}) values ({})", tn, cs, fs);
-        println!("{:?}", sql);
         let mut x = pl.values.clone();
-        x.push(pl.variant);
+        let jb = "".to_string();
+        x.push(Val{value: pl.variant, typ: &jb});
         let mut r = query(&sql);
         for i in x {
-            r = r.bind(i);
+            match i.typ.as_str() {
+                "integer" => {
+                    r = r.bind(i.value.as_i64().unwrap());
+                },
+                _ => {
+                    r = r.bind(i.value);
+                }
+            };
         }
         let mut r = r.fetch(&**self);
         while let Some(i) = r.try_next().await? {

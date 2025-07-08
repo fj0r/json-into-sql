@@ -38,12 +38,18 @@ pub struct Entity {
 }
 
 #[derive(Debug, Clone)]
+pub struct Val<'a> {
+    pub value: &'a Value,
+    pub typ: &'a String,
+}
+
+#[derive(Debug, Clone)]
 pub struct Payload<'a> {
     pub schema: &'a String,
     pub table: &'a String,
     pub columns: &'a Vec<String>,
     pub fields: &'a Vec<String>,
-    pub values: Vec<&'a Value>,
+    pub values: Vec<Val<'a>>,
     pub pk: &'a Vec<String>,
     pub variant: &'a Value,
 }
