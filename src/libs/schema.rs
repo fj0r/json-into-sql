@@ -44,22 +44,14 @@ impl<T: Define> Store<T> {
         }
     }
     pub fn update(&mut self, entity: Entity) -> Result<()> {
-        self.schema
-            .entry(entity.schema)
-            .and_modify(|s| {
-                s.table
-                    // TODO: rm clone
-                    .entry(entity.table.clone())
-                    .and_modify(|t| {
-                        *t = entity.content.clone();
-                    })
-                    .or_insert_with(|| entity.content.clone());
-            })
-            .or_insert_with(|| {
-                let mut table = HashMap::new();
-                table.insert(entity.table, entity.content);
-                Schema { table }
-            });
+        let mut t = if let Some(s) = self.schema.remove(&entity.schema) {
+            s
+        } else {
+            let table = HashMap::new();
+            Schema { table }
+        };
+        t.table.insert(entity.table, entity.content);
+        self.schema.insert(entity.schema, t);
         Ok(())
     }
 }
