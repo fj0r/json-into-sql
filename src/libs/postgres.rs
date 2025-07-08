@@ -1,6 +1,6 @@
 use super::config::Database;
 use super::schema::{Column, Define, Entity, Store, Table};
-use anyhow::Result;
+use anyhow::{Result, anyhow};
 use futures::TryStreamExt;
 use sqlx::{Pool, Postgres, Row, postgres::PgPoolOptions, query};
 use std::collections::HashMap;
@@ -66,6 +66,9 @@ impl Define for Pool<Postgres> {
             },
         })
     }
+    fn get<'a>(&self, schema: &'a str, table: &'a str) -> Result<Self::Output> {
+        unreachable!()
+    }
 }
 
 impl Define for Store<Pool<Postgres>> {
@@ -80,6 +83,15 @@ impl Define for Store<Pool<Postgres>> {
             let r = self.client.sync(schema, table).await?;
             self.update(r.clone())?;
             Ok(r.content)
+        }
+    }
+    fn get<'a>(&self, schema: &'a str, table: &'a str) -> Result<Self::Output> {
+        if let Some(s) = self.schema.get(schema)
+            && let Some(t) = s.table.get(table)
+        {
+            Ok(t.to_owned())
+        } else {
+            Err(anyhow!("not fount"))
         }
     }
 }

@@ -59,4 +59,5 @@ impl<T: Define> Store<T> {
 pub trait Define {
     type Output;
     async fn sync<'a>(&mut self, schema: &'a str, table: &'a str) -> Result<Self::Output>;
+    fn get<'a>(&self, schema: &'a str, table: &'a str) -> Result<Self::Output>;
 }
