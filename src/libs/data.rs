@@ -3,6 +3,7 @@ use super::shared::{PgShared, Shared};
 use axum::{
     Json, Router,
     extract::{Path, Query, State},
+    response::IntoResponse,
     routing::{get, post},
 };
 

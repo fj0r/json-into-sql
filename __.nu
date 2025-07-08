@@ -5,7 +5,7 @@ export def post [
 ] {
     let data = $data | default {{}}
     (
-        http post
+        http post -e
         --content-type application/json
         $"localhost:5050/v1/upsert/($schema)/($table)?var=x"
         $data
@@ -18,11 +18,11 @@ export def schema [
     --force(-f)
 ] {
     let f = if $force { "?force_update=true" } else { "" }
-    http get $"localhost:5050/v1/schema/($schema)/($table)($f)"
+    http get -e $"localhost:5050/v1/schema/($schema)/($table)($f)"
 }
 
 export def list [] {
-    http get localhost:5050/v1/list
+    http get -e localhost:5050/v1/list
 }
 
 export def git-hooks [act ctx] {
