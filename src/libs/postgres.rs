@@ -1,5 +1,5 @@
 use super::config::Database;
-use super::schema::{Column, Define, Entity, Store, Table};
+use super::schema::{Column, Define, Entity, Payload, Store, Table};
 use anyhow::{Result, anyhow};
 use futures::TryStreamExt;
 use sqlx::{Pool, Postgres, Row, postgres::PgPoolOptions, query};
@@ -30,6 +30,10 @@ impl DerefMut for Pg {
 }
 
 impl Pg {
+    async fn upsert<'a>(&self, payload: &Payload<'a>) -> Result<()> {
+        println!("{:?}", payload);
+        Ok(())
+    }
     async fn fetch<'a>(&self, schema: &'a str, table: &'a str) -> Result<Entity> {
         let mut x =
         query(r#"
@@ -119,5 +123,9 @@ impl Define for Store<Pg> {
         } else {
             Err(anyhow!("not fount"))
         }
+    }
+    async fn put<'a>(&self, payload: &Payload<'a>) -> Result<()> {
+        let _ = self.client.upsert(payload).await;
+        Ok(())
     }
 }

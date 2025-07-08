@@ -1,6 +1,7 @@
 use super::config::AllowList;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use std::collections::HashMap;
 use std::fmt::Debug;
 
@@ -36,6 +37,15 @@ pub struct Entity {
     pub content: Table,
 }
 
+#[derive(Debug, Clone)]
+pub struct Payload<'a> {
+    pub fields: &'a Vec<String>,
+    pub values: Vec<&'a Value>,
+    pub pk: &'a Vec<String>,
+    pub variant: &'a str,
+    pub ext: HashMap<&'a String, &'a Value>,
+}
+
 impl<T> Store<T> {
     pub fn new(client: T, allow_list: AllowList) -> Self {
         Self {
@@ -66,4 +76,5 @@ pub trait Define {
         force: &'a Option<bool>,
     ) -> Result<Self::Output>;
     fn get<'a>(&self, schema: &'a str, table: &'a str) -> Result<Self::Output>;
+    async fn put<'a>(&self, payload: &Payload<'a>) -> Result<()>;
 }

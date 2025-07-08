@@ -1,9 +1,7 @@
-use crate::libs::error::mkerr;
-
 use super::error::HttpResult;
-use super::schema::{Define, Table};
+use super::schema::{Define, Payload, Table};
 use super::shared::{PgShared, Shared};
-use anyhow::anyhow;
+use crate::libs::error::mkerr;
 use axum::{
     Json, Router,
     extract::{Path, Query, State},
@@ -11,6 +9,7 @@ use axum::{
 };
 use serde::Deserialize;
 use serde_json::Value;
+use std::collections::HashMap;
 
 async fn list(State(db): State<PgShared>) -> HttpResult<Json<Vec<String>>> {
     let db = db.read().await;
@@ -53,11 +52,38 @@ async fn upsert(
     if !tbl.variant.contains(&q.var) {
         return mkerr(format!("{} is not a variant", &q.var));
     };
-    println!("{:?}", tbl);
-    println!("{}, {}", schema, table);
-    println!("{}", data);
-    println!("{:?}", q.var);
-    println!("{:?}", db);
+    let d = if data.is_object() {
+        &vec![data.clone()]
+    } else if data.is_array() {
+        data.as_array().unwrap()
+    } else {
+        &Vec::new()
+    };
+    for i in d {
+        if let Some(i) = i.as_object() {
+            let mut ix = 0;
+            let mut fields = Vec::new();
+            let mut values = Vec::new();
+            let mut ext = HashMap::new();
+            for (k, v) in i.iter() {
+                if tbl.column.contains_key(k) {
+                    ix += 1;
+                    fields.push(format!("${}", ix));
+                    values.push(v);
+                } else {
+                    ext.insert(k, v);
+                }
+            }
+            let x = Payload {
+                pk: &tbl.primary_key,
+                fields: &fields,
+                values,
+                ext,
+                variant: &q.var,
+            };
+            let _ = db.put(&x).await;
+        };
+    }
     Ok(Json(data))
 }
 

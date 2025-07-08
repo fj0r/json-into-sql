@@ -7,7 +7,7 @@ export def post [
     (
         http post -e
         --content-type application/json
-        $"localhost:5050/v1/upsert/($schema)/($table)?var=x"
+        $"localhost:5050/v1/upsert/($schema)/($table)?var=data"
         $data
     )
 }
