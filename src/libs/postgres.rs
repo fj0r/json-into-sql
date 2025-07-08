@@ -30,8 +30,19 @@ impl DerefMut for Pg {
 }
 
 impl Pg {
-    async fn upsert<'a>(&self, payload: &Payload<'a>) -> Result<()> {
-        println!("{:?}", payload);
+    async fn upsert<'a>(&self, pl: &Payload<'a>) -> Result<()> {
+        let cs = pl.columns.join(", ");
+        let fs = pl.fields.join(", ");
+        let tn = format!("{}.{}", pl.schema, pl.table);
+        // TODO: arbitrary values
+        let sql = format!("insert into {} ({}) values (unnest({}))", tn, cs, "$1");
+        println!("{:?}", sql);
+        let mut x = pl.values.clone();
+        x.push(pl.variant);
+        let mut r = query(&sql).bind(x).fetch(&**self);
+        while let Some(i) = r.try_next().await? {
+            println!("{:?}", i);
+        }
         Ok(())
     }
     async fn fetch<'a>(&self, schema: &'a str, table: &'a str) -> Result<Entity> {

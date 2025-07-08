@@ -8,8 +8,7 @@ use axum::{
     routing::{get, post},
 };
 use serde::Deserialize;
-use serde_json::Value;
-use std::collections::HashMap;
+use serde_json::{Map, Value};
 
 async fn list(State(db): State<PgShared>) -> HttpResult<Json<Vec<String>>> {
     let db = db.read().await;
@@ -62,24 +61,32 @@ async fn upsert(
     for i in d {
         if let Some(i) = i.as_object() {
             let mut ix = 0;
+            let mut columns = Vec::new();
             let mut fields = Vec::new();
             let mut values = Vec::new();
-            let mut ext = HashMap::new();
+            let mut ext = Map::new();
             for (k, v) in i.iter() {
                 if tbl.column.contains_key(k) {
                     ix += 1;
                     fields.push(format!("${}", ix));
+                    columns.push(k.to_owned());
                     values.push(v);
                 } else {
-                    ext.insert(k, v);
+                    ext.insert(k.to_string(), v.clone());
                 }
             }
+            ix += 1;
+            fields.push(format!("${}", ix));
+            columns.push(q.var.clone());
+            let variant = &Value::Object(ext);
             let x = Payload {
+                schema: &schema,
+                table: &table,
                 pk: &tbl.primary_key,
                 fields: &fields,
+                columns: &columns,
                 values,
-                ext,
-                variant: &q.var,
+                variant,
             };
             let _ = db.put(&x).await;
         };

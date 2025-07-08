@@ -39,11 +39,13 @@ pub struct Entity {
 
 #[derive(Debug, Clone)]
 pub struct Payload<'a> {
+    pub schema: &'a String,
+    pub table: &'a String,
+    pub columns: &'a Vec<String>,
     pub fields: &'a Vec<String>,
     pub values: Vec<&'a Value>,
     pub pk: &'a Vec<String>,
-    pub variant: &'a str,
-    pub ext: HashMap<&'a String, &'a Value>,
+    pub variant: &'a Value,
 }
 
 impl<T> Store<T> {
