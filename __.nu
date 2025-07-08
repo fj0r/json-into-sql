@@ -15,8 +15,14 @@ export def post [
 export def schema [
     --schema(-s): string = 'public'
     --table(-t): string = 'test'
+    --force(-f)
 ] {
-    http get $"localhost:5050/v1/schema/($schema)/($table)"
+    let f = if $force { "?force_update=true" } else { "" }
+    http get $"localhost:5050/v1/schema/($schema)/($table)($f)"
+}
+
+export def list [] {
+    http get localhost:5050/v1/list
 }
 
 export def git-hooks [act ctx] {

@@ -1,24 +1,24 @@
+use super::postgres::Pg;
 use super::schema::Store;
 use axum::extract::FromRef;
-use sqlx::{Pool, Postgres};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-pub type Pg = Arc<RwLock<Store<Pool<Postgres>>>>;
+pub type PgShared = Arc<RwLock<Store<Pg>>>;
 
 #[derive(Debug, Clone)]
 pub struct Shared {
-    pub db: Arc<RwLock<Store<Pool<Postgres>>>>,
+    pub db: Arc<RwLock<Store<Pg>>>,
 }
 
-impl FromRef<Shared> for Pg {
+impl FromRef<Shared> for PgShared {
     fn from_ref(input: &Shared) -> Self {
         input.db.clone()
     }
 }
 
 impl Shared {
-    pub fn new(db: Store<Pool<Postgres>>) -> Self {
+    pub fn new(db: Store<Pg>) -> Self {
         Self {
             db: Arc::new(RwLock::new(db)),
         }

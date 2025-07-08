@@ -4,6 +4,7 @@ use anyhow::{Result, anyhow};
 use futures::TryStreamExt;
 use sqlx::{Pool, Postgres, Row, postgres::PgPoolOptions, query};
 use std::collections::HashMap;
+use std::ops::{Deref, DerefMut};
 use tracing::info;
 
 pub async fn conn(config: &Database) -> Result<Pool<Postgres>> {
@@ -12,9 +13,24 @@ pub async fn conn(config: &Database) -> Result<Pool<Postgres>> {
     Ok(pool)
 }
 
-impl Define for Pool<Postgres> {
-    type Output = Entity;
-    async fn sync<'a>(&mut self, schema: &'a str, table: &'a str) -> Result<Self::Output> {
+#[derive(Debug)]
+pub struct Pg(pub Pool<Postgres>);
+
+impl Deref for Pg {
+    type Target = Pool<Postgres>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl DerefMut for Pg {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+impl Pg {
+    async fn fetch<'a>(&self, schema: &'a str, table: &'a str) -> Result<Entity> {
         let mut x =
         query(r#"
             with ct as (
@@ -35,7 +51,7 @@ impl Define for Pool<Postgres> {
          "#)
         .bind(schema)
         .bind(table)
-        .fetch(&*self);
+        .fetch(&**self);
 
         let mut pks = Vec::new();
         let mut column = HashMap::new();
@@ -66,25 +82,30 @@ impl Define for Pool<Postgres> {
             },
         })
     }
-    fn get<'a>(&self, schema: &'a str, table: &'a str) -> Result<Self::Output> {
-        unreachable!()
-    }
 }
 
-impl Define for Store<Pool<Postgres>> {
+impl Define for Store<Pg> {
     type Output = Table;
-    async fn sync<'a>(&mut self, schema: &'a str, table: &'a str) -> Result<Self::Output> {
-        if let Some(s) = self.schema.get(schema)
+    async fn sync<'a>(
+        &mut self,
+        schema: &'a str,
+        table: &'a str,
+        force: &'a Option<bool>,
+    ) -> Result<Self::Output> {
+        let force = force.unwrap_or(false);
+        if !force
+            && let Some(s) = self.schema.get(schema)
             && let Some(t) = s.table.get(table)
         {
             Ok(t.clone())
         } else {
             info!("sync schema from {}.{}", schema, table);
-            let r = self.client.sync(schema, table).await?;
+            let r = self.client.fetch(schema, table).await?;
             self.update(r.clone())?;
             Ok(r.content)
         }
     }
+
     fn get<'a>(&self, schema: &'a str, table: &'a str) -> Result<Self::Output> {
         if let Some(s) = self.schema.get(schema)
             && let Some(t) = s.table.get(table)

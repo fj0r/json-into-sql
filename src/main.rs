@@ -9,7 +9,7 @@ use axum::{Router, extract::Json, routing::get};
 use libs::config::{Config, LogFormat};
 use libs::data::data_router;
 use libs::error::HttpResult;
-use libs::postgres::conn;
+use libs::postgres::{Pg, conn};
 use libs::schema::Store;
 use libs::shared::Shared;
 use serde_json::Value;
@@ -33,7 +33,7 @@ async fn main() -> Result<()> {
     };
 
     let client = conn(&cfg.database).await?;
-    let shared = Shared::new(Store::new(client, cfg.database.allow_list));
+    let shared = Shared::new(Store::new(Pg(client), cfg.database.allow_list));
 
     let app = Router::new()
         .nest("/v1", data_router())

@@ -22,7 +22,7 @@ pub struct Schema {
 }
 
 #[derive(Debug)]
-pub struct Store<T: Define> {
+pub struct Store<T> {
     pub schema: HashMap<String, Schema>,
     pub allow_list: AllowList,
     pub client: T,
@@ -35,7 +35,7 @@ pub struct Entity {
     pub content: Table,
 }
 
-impl<T: Define> Store<T> {
+impl<T> Store<T> {
     pub fn new(client: T, allow_list: AllowList) -> Self {
         Self {
             schema: HashMap::new(),
@@ -58,6 +58,11 @@ impl<T: Define> Store<T> {
 
 pub trait Define {
     type Output;
-    async fn sync<'a>(&mut self, schema: &'a str, table: &'a str) -> Result<Self::Output>;
+    async fn sync<'a>(
+        &mut self,
+        schema: &'a str,
+        table: &'a str,
+        force: &'a Option<bool>,
+    ) -> Result<Self::Output>;
     fn get<'a>(&self, schema: &'a str, table: &'a str) -> Result<Self::Output>;
 }

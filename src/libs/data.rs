@@ -1,5 +1,5 @@
 use super::error::HttpResult;
-use super::shared::{Pg, Shared};
+use super::shared::{PgShared, Shared};
 use axum::{
     Json, Router,
     extract::{Path, Query, State},
@@ -10,9 +10,7 @@ use super::schema::{Define, Table};
 use serde::Deserialize;
 use serde_json::Value;
 
-async fn list(
-    State(db): State<Pg>,
-) -> HttpResult<Json<Vec<String>>> {
+async fn list(State(db): State<PgShared>) -> HttpResult<Json<Vec<String>>> {
     let db = db.read().await;
     let mut r = Vec::new();
     for (k, v) in &db.schema {
@@ -23,24 +21,29 @@ async fn list(
     Ok(Json(r))
 }
 
+#[derive(Deserialize, Debug)]
+struct QuerySchema {
+    force_update: Option<bool>,
+}
 async fn schema(
-    State(db): State<Pg>,
+    Query(q): Query<QuerySchema>,
     Path((schema, table)): Path<(String, String)>,
+    State(db): State<PgShared>,
 ) -> HttpResult<Json<Table>> {
     let mut db = db.write().await;
-    let x = db.sync(&schema, &table).await?;
+    let x = db.sync(&schema, &table, &q.force_update).await?;
     Ok(Json(x))
 }
 
 #[derive(Deserialize, Debug)]
-struct QueryParams {
+struct QueryUpsert {
     var: String,
 }
 
 async fn upsert(
     Path((schema, table)): Path<(String, String)>,
-    Query(q): Query<QueryParams>,
-    State(db): State<Pg>,
+    Query(q): Query<QueryUpsert>,
+    State(db): State<PgShared>,
     Json(data): Json<Value>,
 ) -> HttpResult<Json<Value>> {
     let db = db.read().await;
