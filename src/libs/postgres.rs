@@ -32,9 +32,24 @@ impl DerefMut for Pg {
 impl Pg {
     async fn upsert<'a>(&self, pl: &Payload<'a>) -> Result<()> {
         let cs = pl.columns.join(", ");
+        let ecs = pl
+            .columns
+            .iter()
+            .map(|x| format!("excluded.{}", x))
+            .collect::<Vec<_>>()
+            .join(", ");
         let fs = pl.fields.join(", ");
+        let pks = pl.pk.join(", ");
         let tn = format!("{}.{}", pl.schema, pl.table);
-        let sql = format!("insert into {} ({}) values ({})", tn, cs, fs);
+        let sql = format!(
+            r#"
+            INSERT INTO {} ({}) VALUES ({})
+            ON CONFLICT ({})
+            DO UPDATE
+            SET ({}) = ({})
+        "#,
+            tn, cs, fs, pks, cs, ecs
+        );
         let mut x = pl.values.clone();
         x.push(Val {
             value: pl.variant,
@@ -74,21 +89,21 @@ impl Pg {
     async fn fetch<'a>(&self, schema: &'a str, table: &'a str) -> Result<Entity> {
         let mut x =
         query(r#"
-            with ct as (
-                select ccu.table_schema, ccu.table_name, ccu.column_name, tc.constraint_type is not null as pk
-                from information_schema.table_constraints as tc
-                join information_schema.constraint_column_usage as ccu
-                on tc.constraint_schema = ccu.constraint_schema
-                    and tc.constraint_name = ccu.constraint_name
-                where tc.constraint_type = 'PRIMARY KEY'
-            ) select co.column_name, co.is_nullable, co.data_type, coalesce(ct.pk, false) as pk
-            from information_schema.columns as co
-            left join ct
-            on co.table_schema = ct.table_schema
-              and co.table_name = ct.table_name
-              and co.column_name = ct.column_name
-            where co.table_schema = $1
-              and co.table_name = $2
+            WITH ct AS (
+                SELECT ccu.table_schema, ccu.table_name, ccu.column_name, tc.constraint_type IS NOT NULL AS pk
+                FROM information_schema.table_constraints AS tc
+                JOIN information_schema.constraint_column_usage AS ccu
+                ON tc.constraint_schema = ccu.constraint_schema
+                    AND tc.constraint_name = ccu.constraint_name
+                WHERE tc.constraint_type = 'PRIMARY KEY'
+            ) SELECT co.column_name, co.is_nullable, co.data_type, COALESCE(ct.pk, false) AS pk
+            FROM information_schema.columns AS co
+            LEFT OUTER JOIN ct
+            ON co.table_schema = ct.table_schema
+              AND co.table_name = ct.table_name
+              AND co.column_name = ct.column_name
+            WHERE co.table_schema = $1
+              AND co.table_name = $2
          "#)
         .bind(schema)
         .bind(table)
