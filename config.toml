@@ -8,6 +8,7 @@ port = 15432
 db = 'chat'
 user = 'chat'
 passwd = 'chat'
+allow_list = ['public.test']
 
 [datamap]
 i64 = ['integer', 'bigint', 'bigserial', 'smallint', 'smallserial', 'serial']

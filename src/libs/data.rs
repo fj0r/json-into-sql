@@ -31,6 +31,15 @@ async fn schema(
     State(db): State<PgShared>,
 ) -> HttpResult<Json<Table>> {
     let mut db = db.write().await;
+
+    // If `allow_list` is None, there are no restrictions.
+    if let Some(al) = &db.allow_list {
+        let tfn = format!("{}.{}", &schema, &table);
+        if !al.contains(&tfn) {
+            return mkerr(format!("{} not in allow_list", &tfn));
+        };
+    };
+
     let x = db.sync(&schema, &table, &q.force_update).await?;
     Ok(Json(x))
 }
@@ -47,6 +56,15 @@ async fn upsert(
     Json(data): Json<Value>,
 ) -> HttpResult<Json<Value>> {
     let db = db.read().await;
+
+    // If `allow_list` is None, there are no restrictions.
+    if let Some(al) = &db.allow_list {
+        let tfn = format!("{}.{}", &schema, &table);
+        if !al.contains(&tfn) {
+            return mkerr(format!("{} not in allow_list", &tfn));
+        };
+    };
+
     let tbl = db.get(&schema, &table)?;
     if !tbl.variant.contains(&q.var) {
         return mkerr(format!("{} is not a variant", &q.var));
