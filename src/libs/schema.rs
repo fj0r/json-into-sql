@@ -1,4 +1,4 @@
-use super::config::AllowList;
+use super::config::{AllowList, DataMap};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -26,6 +26,7 @@ pub struct Schema {
 #[derive(Debug)]
 pub struct Store<T> {
     pub schema: HashMap<String, Schema>,
+    pub datamap: DataMap,
     pub allow_list: AllowList,
     pub client: T,
 }
@@ -55,8 +56,9 @@ pub struct Payload<'a> {
 }
 
 impl<T> Store<T> {
-    pub fn new(client: T, allow_list: AllowList) -> Self {
+    pub fn new(client: T, allow_list: AllowList, datamap: DataMap) -> Self {
         Self {
+            datamap,
             schema: HashMap::new(),
             allow_list,
             client,

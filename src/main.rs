@@ -21,6 +21,7 @@ async fn is_ready() -> HttpResult<Json<Value>> {
 #[tokio::main]
 async fn main() -> Result<()> {
     let cfg = Config::new()?;
+    dbg!(&cfg);
 
     let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("info"));
     match &cfg.trace.format {
@@ -33,7 +34,7 @@ async fn main() -> Result<()> {
     };
 
     let client = conn(&cfg.database).await?;
-    let shared = Shared::new(Store::new(Pg(client), cfg.database.allow_list));
+    let shared = Shared::new(Store::new(Pg(client), cfg.database.allow_list, cfg.datamap));
 
     let app = Router::new()
         .nest("/v1", data_router())
