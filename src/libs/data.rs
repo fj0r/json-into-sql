@@ -49,6 +49,17 @@ struct QueryUpsert {
     var: String,
 }
 
+fn check_type(typ: &str, v: &Value) -> bool {
+    match typ {
+        "i64" => v.is_i64(),
+        "f64" => v.is_f64(),
+        "str" => v.is_string(),
+        "bool" => v.is_boolean(),
+        "date" => v.is_string(),
+        _ => false
+    }
+}
+
 async fn upsert(
     Path((schema, table)): Path<(String, String)>,
     Query(q): Query<QueryUpsert>,
@@ -69,6 +80,7 @@ async fn upsert(
     if !tbl.variant.contains(&q.var) {
         return mkerr(format!("{} is not a variant", &q.var));
     };
+
     let d = if data.is_object() {
         &vec![data.clone()]
     } else if data.is_array() {
@@ -76,6 +88,8 @@ async fn upsert(
     } else {
         &Vec::new()
     };
+
+    let dm = &db.datamap;
     for i in d {
         if let Some(i) = i.as_object() {
             let mut ix = 0;
@@ -84,15 +98,15 @@ async fn upsert(
             let mut values = Vec::new();
             let mut ext = Map::new();
             for (k, v) in i.iter() {
-                if tbl.column.contains_key(k) {
+                if tbl.column.contains_key(k)
+                    && let Some(dt) = tbl.column.get(k)
+                    && let Some(typ) = dm.get(&dt.data_type)
+                    && check_type(typ, &v)
+                {
                     ix += 1;
                     fields.push(format!("${}", ix));
                     columns.push(k.to_owned());
-                    let t = tbl.column.get(k).unwrap();
-                    let val = Val {
-                        value: v,
-                        typ: &t.data_type,
-                    };
+                    let val = Val { value: v, typ };
                     values.push(val);
                 } else {
                     ext.insert(k.to_string(), v.clone());
@@ -111,10 +125,10 @@ async fn upsert(
                 values,
                 variant,
             };
-            let _ = db.put(&x).await;
+            let _ = db.put(&x).await?;
         };
     }
-    Ok(Json(data))
+    Ok(Json(d.len().into()))
 }
 
 pub fn data_router() -> Router<Shared> {

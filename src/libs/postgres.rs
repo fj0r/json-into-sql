@@ -44,8 +44,21 @@ impl Pg {
         let mut r = query(&sql);
         for i in x {
             match i.typ.as_str() {
-                "integer" => {
+                "i64" => {
                     r = r.bind(i.value.as_i64().unwrap());
+                }
+                "f64" => {
+                    r = r.bind(i.value.as_f64().unwrap());
+                }
+                "str" => {
+                    r = r.bind(i.value.as_str().unwrap());
+                }
+                "bool" => {
+                    r = r.bind(i.value.as_bool().unwrap());
+                }
+                "date" => {
+                    let v = i.value.as_str().unwrap();
+                    r = r.bind(v);
                 }
                 _ => {
                     r = r.bind(i.value);
@@ -53,6 +66,7 @@ impl Pg {
             };
         }
         let mut r = r.fetch(&**self);
+
         while let Some(i) = r.try_next().await? {
             println!("{:?}", i);
         }
@@ -149,7 +163,7 @@ impl Define for Store<Pg> {
         }
     }
     async fn put<'a>(&self, payload: &Payload<'a>) -> Result<()> {
-        let _ = self.client.upsert(payload).await;
+        let _ = self.client.upsert(payload).await?;
         Ok(())
     }
 }
