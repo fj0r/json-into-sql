@@ -9,6 +9,7 @@ use axum::{
 };
 use serde::Deserialize;
 use serde_json::{Map, Value};
+use super::config::JsonType;
 
 async fn list(State(db): State<PgShared>) -> HttpResult<Json<Vec<String>>> {
     let db = db.read().await;
@@ -49,14 +50,14 @@ struct QueryUpsert {
     var: String,
 }
 
-fn check_type(typ: &str, v: &Value) -> bool {
+fn check_type(typ: &JsonType, v: &Value) -> bool {
     match typ {
-        "i64" => v.is_i64(),
-        "f64" => v.is_f64(),
-        "str" => v.is_string(),
-        "bool" => v.is_boolean(),
-        "date" => v.is_string(),
-        _ => false
+        JsonType::I64 => v.is_i64(),
+        JsonType::F64 => v.is_f64(),
+        JsonType::Str => v.is_string(),
+        JsonType::Bool => v.is_boolean(),
+        JsonType::Date => v.is_string(),
+        JsonType::Unknown => false
     }
 }
 

@@ -11,8 +11,8 @@ passwd = 'chat'
 allow_list = ['public.test']
 
 [datamap]
-i64 = ['integer', 'bigint', 'bigserial', 'smallint', 'smallserial', 'serial']
-f64 = ['double precision', 'numeric', 'real']
-str = ['character', 'character varying', 'text']
+integer = ['integer', 'bigint', 'bigserial', 'smallint', 'smallserial', 'serial']
+float = ['double precision', 'numeric', 'real']
+string = ['character', 'character varying', 'text']
 date = ['date', 'time', 'timestamp']
 bool = ['boolean']

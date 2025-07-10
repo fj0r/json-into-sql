@@ -1,4 +1,4 @@
-use super::config::{AllowList, DataMap};
+use super::config::{AllowList, DataMap, JsonType};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -41,7 +41,7 @@ pub struct Entity {
 #[derive(Debug, Clone)]
 pub struct Val<'a> {
     pub value: &'a Value,
-    pub typ: &'a String,
+    pub typ: &'a JsonType,
 }
 
 #[derive(Debug, Clone)]

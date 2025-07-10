@@ -1,4 +1,4 @@
-use super::config::Database;
+use super::config::{Database, JsonType};
 use super::schema::{Column, Define, Entity, Payload, Store, Table, Val};
 use anyhow::{Result, anyhow};
 use futures::TryStreamExt;
@@ -36,31 +36,30 @@ impl Pg {
         let tn = format!("{}.{}", pl.schema, pl.table);
         let sql = format!("insert into {} ({}) values ({})", tn, cs, fs);
         let mut x = pl.values.clone();
-        let jb = "".to_string();
         x.push(Val {
             value: pl.variant,
-            typ: &jb,
+            typ: &JsonType::Unknown,
         });
         let mut r = query(&sql);
         for i in x {
-            match i.typ.as_str() {
-                "i64" => {
+            match i.typ {
+                JsonType::I64 => {
                     r = r.bind(i.value.as_i64().unwrap());
                 }
-                "f64" => {
+                JsonType::F64 => {
                     r = r.bind(i.value.as_f64().unwrap());
                 }
-                "str" => {
+                JsonType::Str => {
                     r = r.bind(i.value.as_str().unwrap());
                 }
-                "bool" => {
+                JsonType::Bool => {
                     r = r.bind(i.value.as_bool().unwrap());
                 }
-                "date" => {
+                JsonType::Date => {
                     let v = i.value.as_str().unwrap();
                     r = r.bind(v);
                 }
-                _ => {
+                JsonType::Unknown => {
                     r = r.bind(i.value);
                 }
             };

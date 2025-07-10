@@ -58,7 +58,17 @@ pub struct Log {
 }
 
 #[derive(Debug, Clone)]
-pub struct DataMap(HashMap<String, String>);
+pub(crate) enum JsonType {
+    I64,
+    F64,
+    Str,
+    Bool,
+    Date,
+    Unknown
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct DataMap(HashMap<String, JsonType>);
 
 impl<'de> Deserialize<'de> for DataMap {
     fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
@@ -77,8 +87,16 @@ impl<'de> Deserialize<'de> for DataMap {
             {
                 let mut r = HashMap::new();
                 while let Some((key, value)) = map.next_entry::<String, Vec<String>>()? {
+                    let k = match key.as_str() {
+                        "integer" => JsonType::I64,
+                        "float" => JsonType::F64,
+                        "string" => JsonType::Str,
+                        "bool" => JsonType::Bool,
+                        "date" => JsonType::Date,
+                        _ => JsonType::Unknown
+                    };
                     for v in value {
-                        r.insert(v, key.clone());
+                        r.insert(v, k.clone());
                     }
                 }
                 Ok(DataMap(r))
@@ -90,7 +108,7 @@ impl<'de> Deserialize<'de> for DataMap {
 }
 
 impl Deref for DataMap {
-    type Target = HashMap<String, String>;
+    type Target = HashMap<String, JsonType>;
     fn deref(&self) -> &Self::Target {
         &self.0
     }
