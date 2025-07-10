@@ -31,3 +31,13 @@ export def git-hooks [act ctx] {
         git add .
     }
 }
+
+export def benchmark [] {
+    mut args = [
+        -c 50 -n 200000
+        -m POST -T application/json
+        http://localhost:5050/v1/upsert/public/test?var=data
+        -d '{"a":1,"score":3424,"x":"j4","ff":{"a":1},"jj":["f"]}'
+    ]
+    oha ...$args
+}
