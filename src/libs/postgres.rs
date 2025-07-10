@@ -37,13 +37,16 @@ impl Pg {
         let sql = format!("insert into {} ({}) values ({})", tn, cs, fs);
         let mut x = pl.values.clone();
         let jb = "".to_string();
-        x.push(Val{value: pl.variant, typ: &jb});
+        x.push(Val {
+            value: pl.variant,
+            typ: &jb,
+        });
         let mut r = query(&sql);
         for i in x {
             match i.typ.as_str() {
                 "integer" => {
                     r = r.bind(i.value.as_i64().unwrap());
-                },
+                }
                 _ => {
                     r = r.bind(i.value);
                 }

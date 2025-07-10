@@ -71,7 +71,10 @@ async fn upsert(
                     fields.push(format!("${}", ix));
                     columns.push(k.to_owned());
                     let t = tbl.column.get(k).unwrap();
-                    let val = Val{value: v, typ: &t.data_type};
+                    let val = Val {
+                        value: v,
+                        typ: &t.data_type,
+                    };
                     values.push(val);
                 } else {
                     ext.insert(k.to_string(), v.clone());

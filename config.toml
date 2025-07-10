@@ -8,3 +8,10 @@ port = 15432
 db = 'chat'
 user = 'chat'
 passwd = 'chat'
+
+[datamap]
+i64 = ['integer', 'bigint', 'bigserial', 'smallint', 'smallserial', 'serial']
+f64 = ['double precision', 'numeric', 'real']
+str = ['character', 'character varying', 'text']
+date = ['date', 'time', 'timestamp']
+bool = ['boolean']
