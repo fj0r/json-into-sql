@@ -8,7 +8,7 @@ pub type PgShared = Arc<RwLock<Store<Pg>>>;
 
 #[derive(Debug, Clone)]
 pub struct Shared {
-    pub db: Arc<RwLock<Store<Pg>>>,
+    pub(crate) db: Arc<RwLock<Store<Pg>>>,
 }
 
 impl FromRef<Shared> for PgShared {
@@ -18,7 +18,7 @@ impl FromRef<Shared> for PgShared {
 }
 
 impl Shared {
-    pub fn new(db: Store<Pg>) -> Self {
+    pub(crate) fn new(db: Store<Pg>) -> Self {
         Self {
             db: Arc::new(RwLock::new(db)),
         }

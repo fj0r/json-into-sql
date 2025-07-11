@@ -4,9 +4,9 @@ use figment::{
     providers::{Env, Format, Toml},
 };
 use serde::{Deserialize, de::Visitor};
-use std::{collections::HashMap, ops::Deref};
+use std::{collections::{HashMap, HashSet}, ops::Deref};
 
-pub type AllowList = Option<Vec<String>>;
+pub type AllowList = Option<HashSet<String>>;
 
 #[derive(Debug, Deserialize, Clone)]
 #[allow(unused)]

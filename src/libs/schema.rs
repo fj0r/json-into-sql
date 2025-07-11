@@ -2,7 +2,7 @@ use super::config::{AllowList, DataMap, JsonType};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -14,7 +14,7 @@ pub struct Column {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Table {
     pub primary_key: Vec<String>,
-    pub variant: Vec<String>,
+    pub variant: HashSet<String>,
     pub column: HashMap<String, Column>,
 }
 
@@ -24,7 +24,7 @@ pub struct Schema {
 }
 
 #[derive(Debug)]
-pub struct Store<T> {
+pub(crate) struct Store<T> {
     pub schema: HashMap<String, Schema>,
     pub datamap: DataMap,
     pub allow_list: AllowList,

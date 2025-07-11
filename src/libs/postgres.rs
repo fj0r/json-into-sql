@@ -3,7 +3,7 @@ use super::schema::{Column, Define, Entity, Payload, Store, Table, Val};
 use anyhow::{Result, anyhow};
 use futures::TryStreamExt;
 use sqlx::{Pool, Postgres, Row, postgres::PgPoolOptions, query};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::ops::{Deref, DerefMut};
 use tracing::info;
 
@@ -110,13 +110,13 @@ impl Pg {
         .fetch(&**self);
 
         let mut primary_key = Vec::new();
-        let mut variant = Vec::new();
+        let mut variant = HashSet::new();
         let mut column = HashMap::new();
         while let Some(r) = x.try_next().await? {
             let name: &str = r.try_get("column_name")?;
             let data_type: &str = r.try_get("data_type")?;
             if data_type == "jsonb" {
-                variant.push(name.to_owned());
+                variant.insert(name.to_owned());
             };
             let data_type: String = data_type.to_owned();
             let nullable: &str = r.try_get("is_nullable")?;
