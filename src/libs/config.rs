@@ -4,7 +4,10 @@ use figment::{
     providers::{Env, Format, Toml},
 };
 use serde::{Deserialize, de::Visitor};
-use std::{collections::{HashMap, HashSet}, ops::Deref};
+use std::{
+    collections::{HashMap, HashSet},
+    ops::Deref,
+};
 
 pub type AllowList = Option<HashSet<String>>;
 
@@ -64,7 +67,7 @@ pub(crate) enum JsonType {
     Str,
     Bool,
     Date,
-    Unknown
+    Unknown,
 }
 
 #[derive(Debug, Clone)]
@@ -93,7 +96,7 @@ impl<'de> Deserialize<'de> for DataMap {
                         "string" => JsonType::Str,
                         "bool" => JsonType::Bool,
                         "date" => JsonType::Date,
-                        _ => JsonType::Unknown
+                        _ => JsonType::Unknown,
                     };
                     for v in value {
                         r.insert(v, k.clone());
