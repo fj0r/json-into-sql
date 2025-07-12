@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Debug;
+use super::redis::RedisPool;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Column {
@@ -29,6 +30,7 @@ pub(crate) struct Store<T> {
     pub datamap: DataMap,
     pub allow_list: AllowList,
     pub client: T,
+    pub redis: RedisPool,
 }
 
 #[derive(Debug, Clone)]
@@ -56,12 +58,13 @@ pub struct Payload<'a> {
 }
 
 impl<T> Store<T> {
-    pub fn new(client: T, allow_list: AllowList, datamap: DataMap) -> Self {
+    pub fn new(client: T, allow_list: AllowList, datamap: DataMap, redis: RedisPool) -> Self {
         Self {
             datamap,
             schema: HashMap::new(),
             allow_list,
             client,
+            redis,
         }
     }
     pub fn update(&mut self, entity: Entity) -> Result<()> {

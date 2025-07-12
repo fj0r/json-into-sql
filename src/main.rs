@@ -10,6 +10,7 @@ use libs::config::{Config, LogFormat};
 use libs::data::data_router;
 use libs::error::HttpResult;
 use libs::postgres::{Pg, conn};
+use libs::redis::conn as RedisConn;
 use libs::schema::Store;
 use libs::shared::Shared;
 use serde_json::Value;
@@ -33,8 +34,14 @@ async fn main() -> Result<()> {
         }
     };
 
+    let redis = RedisConn().await?;
     let client = conn(&cfg.database).await?;
-    let shared = Shared::new(Store::new(Pg(client), cfg.database.allow_list, cfg.datamap));
+    let shared = Shared::new(Store::new(
+        Pg(client),
+        cfg.database.allow_list,
+        cfg.datamap,
+        redis,
+    ));
 
     let app = Router::new()
         .nest("/v1", data_router())

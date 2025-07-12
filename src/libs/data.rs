@@ -1,3 +1,4 @@
+use super::config::JsonType;
 use super::error::HttpResult;
 use super::schema::{Define, Payload, Table, Val};
 use super::shared::{PgShared, Shared};
@@ -9,7 +10,6 @@ use axum::{
 };
 use serde::Deserialize;
 use serde_json::{Map, Value};
-use super::config::JsonType;
 
 async fn list(State(db): State<PgShared>) -> HttpResult<Json<Vec<String>>> {
     let db = db.read().await;
@@ -57,7 +57,7 @@ fn check_type(typ: &JsonType, v: &Value) -> bool {
         JsonType::Str => v.is_string(),
         JsonType::Bool => v.is_boolean(),
         JsonType::Date => v.is_string(),
-        JsonType::Unknown => false
+        JsonType::Unknown => false,
     }
 }
 
@@ -132,9 +132,19 @@ async fn upsert(
     Ok(Json(d.len().into()))
 }
 
+use redis::TypedCommands;
+
+pub async fn test_redis(State(db): State<PgShared>) -> HttpResult<()> {
+    let d = db.read().await;
+    let mut conn = d.redis.get()?;
+    let _ = TypedCommands::set(&mut conn, "a", 42);
+    Ok(())
+}
+
 pub fn data_router() -> Router<Shared> {
     Router::new()
         .route("/list", get(list))
+        .route("/test_redis", get(test_redis))
         .route("/schema/{schema}/{table}", get(schema))
         .route("/upsert/{schema}/{table}", post(upsert))
 }

@@ -41,3 +41,12 @@ export def benchmark [] {
     ]
     oha ...$args
 }
+
+export def benchmark-redis [] {
+    mut args = [
+        -c 50 -n 200000
+        -T application/json
+        http://localhost:5050/v1/test_redis
+    ]
+    oha ...$args
+}
