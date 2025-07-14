@@ -105,8 +105,7 @@ impl<'de> Deserialize<'de> for DataMap {
                 Ok(DataMap(r))
             }
         }
-        const FIELDS: &[&str] = &["0"];
-        deserializer.deserialize_struct("DataMap", FIELDS, DataMapVistor)
+        deserializer.deserialize_tuple_struct("DataMap", 1, DataMapVistor)
     }
 }
 
