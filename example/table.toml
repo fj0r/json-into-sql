@@ -1,0 +1,75 @@
+[flow]
+primary = ["id"]
+
+[flow.fields]
+id = { type = "serial" }
+name = { type = "text" }
+
+[node]
+primary = ["id"]
+
+[node.fields]
+id = { type = "serial" }
+name = { type = "text" }
+kind = { enum = ["browser", "web"] }
+action = { type = "jsonb", default = '{}' }
+
+# kind: browser
+# action
+# {type: goto, url: }
+# {type: click, selector}
+
+[edge]
+primary = ["flow_id", "income", "outgo"]
+
+[edge.fields]
+flow_id = { references = ["flow", "id"] }
+income = { references = ["node", "id"] }
+outgo = { references = ["node", "id"] }
+condition = { type = "jsonb" }
+
+[ua]
+primary = ["id"]
+
+[ua.fields]
+id = { type = "serial" }
+name = { type = "text" }
+data = { type = "text" }
+valid = { type = "boolean", default = 'true' }
+created = { type = "timestamp", default = "now()" }
+updated = { type = "timestamp", default = "now()" }
+
+[proxy]
+primary = ["id"]
+
+[proxy.fields]
+id = { type = "serial" }
+name = { type = "text" }
+protocol = { enum = ["http","https","socks4","socks5"] }
+addr = { type = "text" }
+port = { type = "int4" }
+valid = { type = "boolean", default = 'true' }
+created = { type = "timestamp", default = "now()" }
+updated = { type = "timestamp", default = "now()" }
+
+[tasks]
+primary = ["id"]
+
+[tasks.fields]
+id = { type = "serial" }
+start = { type = "timestamp", default = "now()" }
+stop = { type = "timestamp" }
+flow = { references = ["flow","id"] }
+context = { type = "jsonb", default = '{}' }
+data = { type = "jsonb" ,default = '{}' }
+
+[steps]
+primary = ["task_id","node_id"]
+
+[steps.fields]
+task_id = { references = ["tasks","id"] }
+node_id = { references = ["node","id"] }
+start = { type = "timestamp", default = "now()" }
+stop = { type = "timestamp" }
+data = { type = "jsonb", default = '{}' }
+error = { type = "jsonb" }
