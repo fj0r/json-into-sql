@@ -2,6 +2,7 @@ use anyhow::Result;
 use serde::Deserialize;
 //use toml::map::Map;
 use std::collections::BTreeMap as Map;
+use std::collections::VecDeque;
 
 #[allow(dead_code)]
 #[derive(Debug, Deserialize)]
@@ -39,7 +40,7 @@ struct Table {
 struct Cols {
     name: String,
     typ: String,
-    x: Vec<String>,
+    x: VecDeque<String>,
     refs: Option<String>,
     enu: Option<Vec<String>>,
 }
@@ -48,9 +49,11 @@ impl std::fmt::Display for Cols {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut x = self.x.clone();
         if let Some(r) = &self.refs {
-            x.push(r.to_string())
+            x.push_back(r.to_string())
         }
-        write!(f, "    {} {} {}", self.name, self.typ, x.join(" "),)
+        x.push_front(self.typ.clone());
+        x.push_front(self.name.clone());
+        write!(f, "    {}", x.as_slices().0.join(" "))
     }
 }
 
@@ -62,7 +65,7 @@ fn gen_columns(
 ) -> Cols {
     let mut enu = None;
     let mut refs = None;
-    let mut x = Vec::new();
+    let mut x = VecDeque::new();
     let typ = match &field.typ {
         Typ::literal(l) => l.to_uppercase(),
         Typ::references((table, column)) => {
@@ -85,17 +88,17 @@ fn gen_columns(
         }
     };
     if field.notnull {
-        x.push("NOT NULL".to_string());
+        x.push_back("NOT NULL".to_string());
     }
     if let Some(d) = &field.default {
         let v = match typ.as_str() {
             "JSONB" => format!("'{}'::JSONB", d),
             _ => d.to_owned(),
         };
-        x.push(format!("DEFAULT {}", v));
+        x.push_back(format!("DEFAULT {}", v));
     }
     if field.uniq {
-        x.push("UNIQ".to_string());
+        x.push_back("UNIQ".to_string());
     }
 
     Cols {
