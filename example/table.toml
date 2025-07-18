@@ -1,14 +1,14 @@
 [flow]
 primary = ["id"]
 
-[flow.fields]
+[flow.column]
 id = { type = "serial" }
 name = { type = "text" }
 
 [node]
 primary = ["id"]
 
-[node.fields]
+[node.column]
 id = { type = "serial" }
 name = { type = "text" }
 kind = { enum = ["browser", "web"] }
@@ -22,7 +22,7 @@ action = { type = "jsonb", default = '{}' }
 [edge]
 primary = ["flow_id", "income", "outgo"]
 
-[edge.fields]
+[edge.column]
 flow_id = { references = ["flow", "id"] }
 income = { references = ["node", "id"] }
 outgo = { references = ["node", "id"] }
@@ -31,7 +31,7 @@ condition = { type = "jsonb" }
 [ua]
 primary = ["id"]
 
-[ua.fields]
+[ua.column]
 id = { type = "serial" }
 name = { type = "text" }
 data = { type = "text" }
@@ -42,7 +42,7 @@ updated = { type = "timestamp", default = "now()" }
 [proxy]
 primary = ["id"]
 
-[proxy.fields]
+[proxy.column]
 id = { type = "serial" }
 name = { type = "text" }
 protocol = { enum = ["http","https","socks4","socks5"] }
@@ -55,7 +55,7 @@ updated = { type = "timestamp", default = "now()" }
 [tasks]
 primary = ["id"]
 
-[tasks.fields]
+[tasks.column]
 id = { type = "serial" }
 start = { type = "timestamp", default = "now()" }
 stop = { type = "timestamp" }
@@ -66,7 +66,7 @@ data = { type = "jsonb" ,default = '{}' }
 [steps]
 primary = ["task_id","node_id"]
 
-[steps.fields]
+[steps.column]
 task_id = { references = ["tasks","id"] }
 node_id = { references = ["node","id"] }
 start = { type = "timestamp", default = "now()" }
