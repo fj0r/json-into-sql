@@ -1,6 +1,5 @@
 use anyhow::Result;
 use serde::Deserialize;
-//use toml::map::Map;
 use std::collections::BTreeMap as Map;
 use std::collections::VecDeque;
 
@@ -57,12 +56,7 @@ impl std::fmt::Display for Cols {
     }
 }
 
-fn gen_columns(
-    table: &String,
-    name: &String,
-    field: &Field,
-    schema: &Map<String, Table>,
-) -> Cols {
+fn gen_columns(table: &String, name: &String, field: &Field, schema: &Map<String, Table>) -> Cols {
     let mut enu = None;
     let mut refs = None;
     let mut x = VecDeque::new();
