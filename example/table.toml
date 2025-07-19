@@ -1,32 +1,39 @@
-[flow]
-primary = ["id"]
-
-[flow.column]
-id = { type = "serial" }
-name = { type = "text", uniq = true }
-[[flow.index]]
-column = ["name"]
-
 [node]
 primary = ["id"]
 
 [node.column]
 id = { type = "serial" }
-name = { type = "text", uniq = true }
+name = { type = "text" }
 kind = { enum = ["browser", "web"] }
 action = { type = "jsonb", default = '{}' }
 
 [[node.index]]
-column = ["name"]
+column = ["name", "kind"]
 # type = "hash"
 # include = ['a', 'b']
 # with = {xxx= "yyy"}
+[[node.uniq]]
+column = ["name", "kind"]
+#[[node.foreign]]
+#column = { name = 'a', kind = 'b' }
+#table = "Ooo"
 
 
 # kind: browser
 # action
 # {type: goto, url: }
 # {type: click, selector}
+
+[flow]
+primary = ["id"]
+
+[flow.column]
+id = { type = "serial" }
+name = { type = "text", uniq = true }
+head = { references = ["node", "id"] }
+[[flow.index]]
+column = ["name"]
+
 
 [edge]
 primary = ["flow_id", "income", "outgo"]
@@ -51,7 +58,7 @@ valid = { type = "boolean", default = 'true' }
 created = { type = "timestamp", default = "now()" }
 updated = { type = "timestamp", default = "now()" }
 [[ua.index]]
-column = ["id"]
+column = ["name"]
 
 [proxy]
 primary = ["id"]
@@ -62,6 +69,8 @@ name = { type = "text", uniq = true }
 protocol = { enum = ["http","https","socks4","socks5"] }
 addr = { type = "text" }
 port = { type = "int4" }
+username = { type = "text" }
+password = { type = "text" }
 valid = { type = "boolean", default = 'true' }
 created = { type = "timestamp", default = "now()" }
 updated = { type = "timestamp", default = "now()" }

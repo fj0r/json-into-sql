@@ -42,10 +42,25 @@ struct Index {
 
 #[allow(dead_code)]
 #[derive(Debug, Deserialize)]
+struct Uniq {
+    column: Vec<String>,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Deserialize)]
+struct Foreign {
+    column: Map<String, String>,
+    table: String,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Deserialize)]
 struct Table {
     column: Map<String, Field>,
     primary: Option<Vec<String>>,
     index: Option<Vec<Index>>,
+    uniq: Option<Vec<Uniq>>,
+    foreign: Option<Vec<Foreign>>,
 }
 
 struct Cols {
@@ -134,7 +149,32 @@ fn gen_table(schema: &Map<String, Table>) -> Vec<String> {
             cs.push(x.to_string());
         }
         if let Some(p) = &v.primary {
-            cs.push(format!("    PRIMARY KEY ({})", p.join(", ")))
+            cs.push(format!("    PRIMARY KEY ({})", p.join(", ")));
+        }
+        if let Some(u) = &v.uniq {
+            for i in u {
+                cs.push(format!("    UNIQUE ({})", i.column.join(", ")));
+            }
+        }
+        if let Some(f) = &v.foreign {
+            for i in f {
+                let k = i
+                    .column
+                    .keys()
+                    .map(String::to_owned)
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                let v = i
+                    .column
+                    .values()
+                    .map(String::to_owned)
+                    .collect::<Vec<_>>()
+                    .join(", ");
+                cs.push(format!(
+                    "    FOREIGN KEY ({}) REFERENCES {} ({})",
+                    k, i.table, v
+                ))
+            }
         }
         let cs = cs.join(",\n");
         r.push(format!("CREATE TABLE {} (\n{}\n);", k, cs));

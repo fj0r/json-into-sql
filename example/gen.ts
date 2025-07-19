@@ -1,6 +1,8 @@
 import { sql } from "bun"
 import { load } from 'js-toml'
+import { load as yamlLoad } from 'js-yaml'
 import { parseArgs } from 'util'
+import { insert } from "./libs/database/insert"
 
 
 export const schema = async () => {
@@ -95,6 +97,18 @@ export const gen = async (x) => {
         if (v.primary != null) {
             f.push(`    PRIMARY KEY (${v.primary.join(", ")})`)
         }
+        if (v.uniq != null) {
+            for (let u of v.uniq) {
+                f.push(`    UNIQUE (${u.column.join(", ")})`)
+            }
+        }
+        if (v.foreign != null) {
+            for (let fr of v.foreign) {
+                let k = Object.keys(fr.column).join(", ")
+                let v = Object.values(fr.column).join(", ")
+                f.push(`    FOREIGN KEY (${k}) REFERENCES ${fr.table} (${v})`)
+            }
+        }
         let fs = f.join(",\n")
         let s = `CREATE TABLE ${k} (\n${fs}\n);`
         stmt.push(s)
@@ -106,7 +120,7 @@ export const gen = async (x) => {
                 c.push(`INCLUDE (${i.include.join(', ')})`)
             }
             if (i.with != null) {
-                let o = Object.entries(i.with).reduce((a, x) => {a.push(`${x[0]} = ${x[1]}`); return a}, []).join(', ')
+                let o = Object.entries(i.with).reduce((a, x) => { a.push(`${x[0]} = ${x[1]}`); return a }, []).join(', ')
                 c.push(`WITH (${o})`)
             }
             if (i.where != null) {
@@ -124,6 +138,8 @@ const argx = {
     options: {
         gen: { type: 'boolean' },
         run: { type: 'boolean' },
+        insert: { type: 'boolean' },
+        trunc: { type: 'boolean' },
         help: { type: 'boolean' }
     },
     allowPositionals: true
@@ -133,14 +149,19 @@ const args = parseArgs(argx)
 if (args.values.help) {
     console.log(JSON.stringify(argx, null, 2))
 } else if (args.values.run) {
-    for (let s of (await gen())) {
+    let t = load(await Bun.file(args.positionals[0]).text())
+    for (let s of (await gen(t))) {
         console.log(s)
         await sql.unsafe(s)
     }
+} else if (args.values.insert) {
+    let t = yamlLoad(await Bun.file(args.positionals[0]).text())
+    await insert(t, false)
+} else if (args.values.trunc) {
+    let t = yamlLoad(await Bun.file(args.positionals[0]).text())
+    await insert(t, true)
 } else if (args.values.gen) {
-    let f = args.positionals[0]
-    let tables = Bun.file(f)
-    let t = load(await tables.text())
+    let t = load(await Bun.file(args.positionals[0]).text())
     let stmt = (await gen(t)).join("\n\n")
     console.log(stmt)
 } else {
