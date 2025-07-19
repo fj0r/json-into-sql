@@ -157,7 +157,7 @@ fn gen_table(schema: &Map<String, Table>) -> Vec<String> {
                 if let Some(w) = &ix.where_ {
                     rest.push(format!("WHERE {}", w));
                 }
-                let name = format!("idx_{}_{}", k, ix.column.join("_"));
+                let name = format!("idx_{}__{}", k, ix.column.join("_"));
                 r.push(format!("CREATE INDEX {} on {} {};", name, k, rest.join(" ")));
             }
         }

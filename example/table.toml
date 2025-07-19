@@ -3,22 +3,25 @@ primary = ["id"]
 
 [flow.column]
 id = { type = "serial" }
-name = { type = "text" }
+name = { type = "text", uniq = true }
+[[flow.index]]
+column = ["name"]
 
 [node]
 primary = ["id"]
 
 [node.column]
 id = { type = "serial" }
-name = { type = "text" }
+name = { type = "text", uniq = true }
 kind = { enum = ["browser", "web"] }
 action = { type = "jsonb", default = '{}' }
 
 [[node.index]]
 column = ["name"]
-#type = "hash"
-#include = ['a', 'b']
-#with = {xxx= "yyy"}
+# type = "hash"
+# include = ['a', 'b']
+# with = {xxx= "yyy"}
+
 
 # kind: browser
 # action
@@ -34,29 +37,37 @@ income = { references = ["node", "id"] }
 outgo = { references = ["node", "id"] }
 condition = { type = "jsonb" }
 
+[[edge.index]]
+column = ["flow_id", "income", "outgo"]
+
 [ua]
 primary = ["id"]
 
 [ua.column]
 id = { type = "serial" }
-name = { type = "text" }
+name = { type = "text", uniq = true }
 data = { type = "text" }
 valid = { type = "boolean", default = 'true' }
 created = { type = "timestamp", default = "now()" }
 updated = { type = "timestamp", default = "now()" }
+[[ua.index]]
+column = ["id"]
 
 [proxy]
 primary = ["id"]
 
 [proxy.column]
 id = { type = "serial" }
-name = { type = "text" }
+name = { type = "text", uniq = true }
 protocol = { enum = ["http","https","socks4","socks5"] }
 addr = { type = "text" }
 port = { type = "int4" }
 valid = { type = "boolean", default = 'true' }
 created = { type = "timestamp", default = "now()" }
 updated = { type = "timestamp", default = "now()" }
+
+[[proxy.index]]
+column = ["name"]
 
 [tasks]
 primary = ["id"]
@@ -69,9 +80,6 @@ flow = { references = ["flow","id"] }
 context = { type = "jsonb", default = '{}' }
 data = { type = "jsonb" ,default = '{}' }
 
-[steps]
-primary = ["task_id","node_id"]
-
 [steps.column]
 task_id = { references = ["tasks","id"] }
 node_id = { references = ["node","id"] }
@@ -79,3 +87,5 @@ start = { type = "timestamp", default = "now()" }
 stop = { type = "timestamp" }
 data = { type = "jsonb", default = '{}' }
 error = { type = "jsonb" }
+[[steps.index]]
+column = ["task_id","node_id"]
