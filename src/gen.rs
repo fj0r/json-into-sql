@@ -1,6 +1,6 @@
 use anyhow::Result;
-use serde::Deserialize;
 use indexmap::IndexMap as Map;
+use serde::Deserialize;
 use std::collections::VecDeque;
 
 #[allow(dead_code)]
@@ -64,7 +64,11 @@ impl std::fmt::Display for Cols {
         }
         x.push_front(self.typ.clone());
         x.push_front(self.name.clone());
-        write!(f, "    {}", x.as_slices().0.join(" "))
+        write!(
+            f,
+            "    {}",
+            [x.as_slices().0, x.as_slices().1].concat().join(" ")
+        )
     }
 }
 
@@ -104,7 +108,7 @@ fn gen_columns(table: &String, name: &String, field: &Field, schema: &Map<String
         x.push_back(format!("DEFAULT {}", v));
     }
     if field.uniq {
-        x.push_back("UNIQ".to_string());
+        x.push_back("UNIQUE".to_string());
     }
 
     Cols {
@@ -158,7 +162,12 @@ fn gen_table(schema: &Map<String, Table>) -> Vec<String> {
                     rest.push(format!("WHERE {}", w));
                 }
                 let name = format!("idx_{}__{}", k, ix.column.join("_"));
-                r.push(format!("CREATE INDEX {} on {} {};", name, k, rest.join(" ")));
+                r.push(format!(
+                    "CREATE INDEX {} ON {} {};",
+                    name,
+                    k,
+                    rest.join(" ")
+                ));
             }
         }
     }
@@ -171,9 +180,8 @@ fn main() -> Result<()> {
         .and_then(|x| std::fs::read_to_string(x).ok());
     if let Some(f) = f {
         let x: Map<String, Table> = toml::from_str(&f).unwrap();
-        println!("{:#?}", &x);
         for s in gen_table(&x) {
-            println!("{}", &s);
+            println!("{}\n", &s);
         }
     }
     Ok(())

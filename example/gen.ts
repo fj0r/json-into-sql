@@ -52,7 +52,7 @@ const dereferences = (tbl, defs) => {
     }
     if (defs.default) {
         let m = {
-            'jsonb': `'${defs.default}'::jsonb`,
+            'jsonb': `'${defs.default}'::JSONB`,
         }
         if (defs.type in m) {
             r.push(`DEFAULT ${m[defs.type]}`)
