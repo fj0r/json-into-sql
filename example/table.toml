@@ -14,6 +14,12 @@ name = { type = "text" }
 kind = { enum = ["browser", "web"] }
 action = { type = "jsonb", default = '{}' }
 
+[[node.index]]
+column = ["name"]
+#type = "hash"
+#include = ['a', 'b']
+#with = {xxx= "yyy"}
+
 # kind: browser
 # action
 # {type: goto, url: }

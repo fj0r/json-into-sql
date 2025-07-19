@@ -30,10 +30,22 @@ struct Field {
 
 #[allow(dead_code)]
 #[derive(Debug, Deserialize)]
+struct Index {
+    column: Vec<String>,
+    #[serde(rename = "type")]
+    typ: Option<String>,
+    include: Option<Vec<String>>,
+    with: Option<Map<String, String>>,
+    #[serde(rename = "where")]
+    where_: Option<String>,
+}
+
+#[allow(dead_code)]
+#[derive(Debug, Deserialize)]
 struct Table {
     column: Map<String, Field>,
     primary: Option<Vec<String>>,
-    index: Option<Vec<String>>,
+    index: Option<Vec<Index>>,
 }
 
 struct Cols {
@@ -122,6 +134,33 @@ fn gen_table(schema: &Map<String, Table>) -> Vec<String> {
         }
         let cs = cs.join(",\n");
         r.push(format!("CREATE TABLE {} (\n{}\n);", k, cs));
+        if let Some(ixs) = &v.index {
+            for ix in ixs {
+                let mut rest = Vec::new();
+                if let Some(typ) = &ix.typ {
+                    rest.push(format!("USING {}", typ.to_uppercase()));
+                }
+                rest.push(format!("({})", ix.column.join(", ")));
+                if let Some(inc) = &ix.include {
+                    rest.push(format!("INCLUDE ({})", inc.join(", ")));
+                }
+                if let Some(with) = &ix.with {
+                    let w = with
+                        .iter()
+                        .fold(Vec::new(), |mut acc, (k, v)| {
+                            acc.push(format!("{} = {}", k, v));
+                            acc
+                        })
+                        .join(", ");
+                    rest.push(format!("WITH ({})", w));
+                }
+                if let Some(w) = &ix.where_ {
+                    rest.push(format!("WHERE {}", w));
+                }
+                let name = format!("idx_{}_{}", k, ix.column.join("_"));
+                r.push(format!("CREATE INDEX {} on {} {};", name, k, rest.join(" ")));
+            }
+        }
     }
     r
 }
