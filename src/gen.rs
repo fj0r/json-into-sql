@@ -1,6 +1,6 @@
 use anyhow::Result;
 use serde::Deserialize;
-use std::collections::BTreeMap as Map;
+use indexmap::IndexMap as Map;
 use std::collections::VecDeque;
 
 #[allow(dead_code)]

@@ -3,6 +3,45 @@ import { load } from 'js-toml'
 import { parseArgs } from 'util'
 
 
+export const schema = async () => {
+    let x = await sql`
+        WITH ct AS (
+            SELECT ccu.table_schema, ccu.table_name, ccu.column_name, tc.constraint_type IS NOT NULL AS pk
+            FROM information_schema.table_constraints AS tc
+            JOIN information_schema.constraint_column_usage AS ccu
+            ON tc.constraint_schema = ccu.constraint_schema
+                AND tc.constraint_name = ccu.constraint_name
+            WHERE tc.constraint_type = 'PRIMARY KEY'
+        ) SELECT co.table_schema, co.table_name, co.column_name, co.is_nullable, co.data_type, COALESCE(ct.pk, false) AS pk
+        FROM information_schema.columns AS co
+        LEFT OUTER JOIN ct
+        ON co.table_schema = ct.table_schema
+          AND co.table_name = ct.table_name
+          AND co.column_name = ct.column_name
+        WHERE co.table_schema not in ('information_schema', 'pg_catalog')
+    `
+    let r: any = {}
+    for (let i of x) {
+        let tn = i.table_schema == 'public' ? i.table_name : [i.table_schema, i.table_name].join('.')
+        if (!(tn in r)) {
+            r[tn] = {
+                column: {},
+                primary: [],
+                index: {}
+            }
+        }
+        if (!(i.column_name in r[tn].column)) {
+            r[tn].column[i.column_name] = {}
+        }
+        r[tn].column[i.column_name].type = i.data_type
+        r[tn].column[i.column_name].nullable = i.is_nullable == 'YES'
+        if (i.pk) {
+            r[tn].primary.push(i.column_name)
+        }
+    }
+    return r
+}
+
 const dereferences = (tbl, defs) => {
     let r = []
     if ('type' in defs) {
@@ -23,7 +62,7 @@ const dereferences = (tbl, defs) => {
 
     }
     if (defs.uniq) {
-        r.push('UNIQ')
+        r.push('UNIQUE')
     }
     if ('references' in defs) {
         let refs = defs.references
@@ -59,6 +98,23 @@ export const gen = async (x) => {
         let fs = f.join(",\n")
         let s = `CREATE TABLE ${k} (\n${fs}\n);`
         stmt.push(s)
+        for (let i of (v.index ?? [])) {
+            let n = [`idx_${k}_`, ...i.column].join('_')
+            let c = i.type == null ? [] : [`USING ${i.type.toUpperCase()}`]
+            c.push(`(${i.column.join(', ')})`)
+            if (i.include != null) {
+                c.push(`INCLUDE (${i.include.join(', ')})`)
+            }
+            if (i.with != null) {
+                let o = Object.entries(i.with).reduce((a, x) => {a.push(`${x[0]} = ${x[1]}`); return a}, []).join(', ')
+                c.push(`WITH (${o})`)
+            }
+            if (i.where != null) {
+                c.push(`WHERE ${i.where}`)
+            }
+            stmt.push(`CREATE INDEX ${n} ON ${k} ${c.join(' ')};`)
+
+        }
     }
     return stmt
 }
@@ -76,7 +132,11 @@ const args = parseArgs(argx)
 
 if (args.values.help) {
     console.log(JSON.stringify(argx, null, 2))
-    console.log(args)
+} else if (args.values.run) {
+    for (let s of (await gen())) {
+        console.log(s)
+        await sql.unsafe(s)
+    }
 } else if (args.values.gen) {
     let f = args.positionals[0]
     let tables = Bun.file(f)
@@ -86,3 +146,4 @@ if (args.values.help) {
 } else {
     console.log('require parameters')
 }
+

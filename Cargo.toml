@@ -17,6 +17,7 @@ tracing = "0.1.41"
 tracing-subscriber = { version = "0.3.19", features = ["json", "env-filter"] }
 axum = "0.8.4"
 toml = { version = "0.9.2", features = ["preserve_order"] }
+indexmap = { version = "2.10.0", features = ["serde"] }
 
 [[bin]]
 name = "main"
