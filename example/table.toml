@@ -47,37 +47,6 @@ data = { type = "jsonb" }
 [[edge.index]]
 column = ["flow_id", "income", "outgo"]
 
-[ua]
-primary = ["id"]
-
-[ua.column]
-id = { type = "serial" }
-name = { type = "text", uniq = true }
-data = { type = "text" }
-valid = { type = "boolean", default = 'true' }
-created = { type = "timestamp", default = "now()" }
-updated = { type = "timestamp", default = "now()" }
-[[ua.index]]
-column = ["name"]
-
-[proxy]
-primary = ["id"]
-
-[proxy.column]
-id = { type = "serial" }
-name = { type = "text", uniq = true }
-protocol = { enum = ["http","https","socks4","socks5"] }
-addr = { type = "text" }
-port = { type = "int4" }
-username = { type = "text" }
-password = { type = "text" }
-valid = { type = "boolean", default = 'true' }
-created = { type = "timestamp", default = "now()" }
-updated = { type = "timestamp", default = "now()" }
-
-[[proxy.index]]
-column = ["name"]
-
 [tasks]
 primary = ["id"]
 
@@ -97,3 +66,49 @@ data = { type = "jsonb" }
 error = { type = "jsonb" }
 [[steps.index]]
 column = ["task_id","node_id"]
+
+
+
+[ua]
+primary = ["name"]
+
+[ua.column]
+name = { type = "text", uniq = true }
+data = { type = "text" }
+valid = { type = "boolean", default = 'true' }
+created = { type = "timestamp", default = "now()" }
+updated = { type = "timestamp", default = "now()" }
+[[ua.index]]
+column = ["name"]
+
+[proxy]
+primary = ["name"]
+
+[proxy.column]
+name = { type = "text", uniq = true }
+protocol = { enum = ["http","https","socks4","socks5"] }
+addr = { type = "text" }
+port = { type = "int4" }
+username = { type = "text" }
+password = { type = "text" }
+bypass = { type = 'jsonb' }
+valid = { type = "boolean", default = 'true' }
+created = { type = "timestamp", default = "now()" }
+updated = { type = "timestamp", default = "now()" }
+
+[[proxy.index]]
+column = ["name"]
+
+[device]
+primary = ["name"]
+
+[device.column]
+name = { type = "text", uniq = true }
+userAgent = { references = ["ua", "name"] }
+data = { type = "jsonb" }
+valid = { type = "boolean", default = 'true' }
+created = { type = "timestamp", default = "now()" }
+updated = { type = "timestamp", default = "now()" }
+
+[[device.index]]
+column = ["name"]
