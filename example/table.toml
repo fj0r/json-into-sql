@@ -75,7 +75,7 @@ primary = ["name"]
 [ua.column]
 name = { type = "text", uniq = true }
 data = { type = "text" }
-valid = { type = "boolean", default = 'true' }
+enabled = { type = "boolean", default = 'true' }
 created = { type = "timestamp", default = "now()" }
 updated = { type = "timestamp", default = "now()" }
 [[ua.index]]
@@ -86,13 +86,14 @@ primary = ["name"]
 
 [proxy.column]
 name = { type = "text", uniq = true }
-protocol = { enum = ["http","https","socks4","socks5"] }
+protocol = { enum = ["http","https","socks4","socks5", "socks"] }
 addr = { type = "text" }
 port = { type = "int4" }
+auth = { enum = ["none", "url", "basic" ]}
 username = { type = "text" }
 password = { type = "text" }
 bypass = { type = 'jsonb' }
-valid = { type = "boolean", default = 'true' }
+enabled = { type = "boolean", default = 'true' }
 created = { type = "timestamp", default = "now()" }
 updated = { type = "timestamp", default = "now()" }
 
@@ -106,7 +107,7 @@ primary = ["name"]
 name = { type = "text", uniq = true }
 userAgent = { references = ["ua", "name"] }
 data = { type = "jsonb" }
-valid = { type = "boolean", default = 'true' }
+enabled = { type = "boolean", default = 'true' }
 created = { type = "timestamp", default = "now()" }
 updated = { type = "timestamp", default = "now()" }
 
