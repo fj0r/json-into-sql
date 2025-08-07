@@ -63,10 +63,12 @@ export const draw_flow = async (name: string) => {
     let r = ["flowchart LR"]
     r.push(`    ${x.head}("${x.head}")`)
     for (let i of x.edge) {
+        let _in = i.in
+        let _out = i.out
         if (i.data != null) {
-            r.push(`    ${i.in} --${i.data.condition}--> ${i.out}["${i.out}"]`)
+            r.push(`    ${_in} --${i.data.condition}--> ${_out}["${_out}"]`)
         } else {
-            r.push(`    ${i.in} --> ${i.out}["${i.out}"]`)
+            r.push(`    ${_in} --> ${_out}["${_out}"]`)
         }
     }
     return `<html>
@@ -110,6 +112,7 @@ const run_node = async (
     context: any,
     info: any
 ) => {
+    console.log({ name, node, context, info })
     return {}
 }
 
@@ -185,12 +188,20 @@ export const run_flow = async (flow: Flow, step = run_node, context = {}) => {
     await sql`UPDATE tasks SET stop = now() WHERE id = ${tid}`
 }
 
-export const list_tasks = async () => {
-    let d = await sql`
+export const list_tasks = async (q) => {
+    let c = []
+    if (q.incomplete === 'true') {
+        c.push('t.stop IS NULL')
+    }
+    let w = c.length > 0 ? `WHERE ${c.join(' AND ')}` : ''
+    let s = `
         select t.id, f.name, t.start, t.stop, t.context
         from tasks as t join flow as f on t.flow = f.id
+        ${w}
         order by t.start desc
+        limit 20
         `
+    let d = await sql.unsafe(s)
     return d
 }
 
